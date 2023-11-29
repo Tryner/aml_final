@@ -1,14 +1,31 @@
 from typing import Callable
 
 from datasets import Dataset, DatasetDict
-from setfit import SetFitModel, SetFitTrainer
+from setfit import SetFitModel, SetFitTrainer, sample_dataset
 
 from .train_config import TrainConfig
 from .active_learning_config import ActiveLearningConfig
+from ..data.dataset_config import DatasetConfig
 
-def active_train(model_init: Callable[[], SetFitModel], dataset: DatasetDict, train_config: TrainConfig, active_learning_config: ActiveLearningConfig):
+def active_train(
+        model_init: Callable[[], SetFitModel], 
+        dataset: DatasetDict, 
+        train_config: TrainConfig, 
+        active_learning_config: ActiveLearningConfig,
+        dataset_config: DatasetConfig
+        ) -> SetFitTrainer: 
     train_dataset = dataset["train"]
     eval_dataset = dataset["validation"]
+
+    #create initial training dataset
+    if active_learning_config.initial_sample=="balanced":
+        assert active_learning_config.samples_per_cycle % dataset_config.num_classes == 0
+        subset = sample_dataset(train_dataset, label_column="label", num_samples=active_learning_config.samples_per_cycle // dataset_config.num_classes)
+    elif active_learning_config.initial_sample=="random":
+        subset = train_dataset.shuffle(seed=active_learning_config.seed).select(range(active_learning_config.samples_per_cycle))
+    else:
+        raise ValueError("Not supported for initial sampling!")
+    
     subset = train_dataset #TODO
     trainer = run_training(model_init=model_init, train_dataset=subset, eval_dataset=eval_dataset, train_config=train_config)
     for _ in range(active_learning_config.active_learning_cycles):
