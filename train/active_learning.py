@@ -25,10 +25,10 @@ def active_train(
         subset = train_dataset.shuffle(seed=active_learning_config.seed).select(range(active_learning_config.samples_per_cycle))
     else:
         raise ValueError("Not supported for initial sampling!")
-    
-    subset = train_dataset #TODO
+
     trainer = run_training(model_init=model_init, train_dataset=subset, eval_dataset=eval_dataset, train_config=train_config)
     for _ in range(active_learning_config.active_learning_cycles):
+        
         subset = subset #TODO add examples
         trainer = run_training(model_init=model_init, train_dataset=subset, eval_dataset=eval_dataset, train_config=train_config)
     return trainer
