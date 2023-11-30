@@ -29,6 +29,7 @@ def active_train(
         subset = train_dataset.shuffle(seed=active_learning_config.seed).select(range(active_learning_config.samples_per_cycle))
     else:
         raise ValueError("Not supported for initial sampling: " + active_learning_config.initial_sample)
+    train_dataset = train_dataset.cast_column("label", subset.features["label"])
 
     trainer = run_training(model_init=model_init, train_dataset=subset, eval_dataset=eval_dataset, train_config=train_config)
     print("Accuracy: " + str(trainer.evaluate()))
