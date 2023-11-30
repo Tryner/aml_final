@@ -6,7 +6,7 @@ from sentence_transformers.losses import CosineSimilarityLoss
 @dataclass
 class TrainConfig:
     loss_class: nn.Module = CosineSimilarityLoss
-    metric = "accuracy"
-    batch_size = 8
-    num_iterations = 5
-    num_epochs = 1
+    metric: str = "accuracy"
+    batch_size: int = 8
+    num_iterations: int = 20
+    num_epochs: int = 1
