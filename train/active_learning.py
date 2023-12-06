@@ -75,9 +75,9 @@ def run_training(
         eval_dataset=eval_dataset,
         loss_class=train_config.loss_class,
         metric=train_config.metric,
-        batch_size=train_config.batch_size,
+        batch_size=train_config.contrastive_batch_size,
         num_iterations=train_config.num_iterations,
-        num_epochs=train_config.num_epochs,
+        num_epochs=1, # we control duration of training via num_iterations
         column_mapping={"sentence": "text", "label": "label"} # Map dataset columns to text/label expected by trainer
     )
     trainer.freeze() # Freeze the head
@@ -87,13 +87,11 @@ def run_training(
     # OR: Unfreeze the head and unfreeze the body -> end-to-end training
     trainer.unfreeze(keep_body_frozen=False)
     trainer.train(
-        num_epochs=10, 
-        batch_size=8,
-        body_learning_rate=1e-5, 
-        learning_rate=1e-2,
-        l2_weight=0.0,
-    ) # add to TrainConfig
+        num_epochs=train_config.head_epochs, 
+        batch_size=train_config.head_batch_size,
+        body_learning_rate=train_config.body_learning_rate, 
+        learning_rate=train_config.head_learning_rate,
+        l2_weight=train_config.head_weight_decay,
+    )
     return trainer
-
-
 
