@@ -10,7 +10,7 @@ class TrainConfig:
     contrastive_batch_size: int = 8
     num_iterations: int = 20
 
-    head_epochs: int = 1
+    head_epochs: int = 5
     head_batch_size: int = 8
     body_learning_rate: float = 1e-5
     head_learning_rate: float = 1e-2
