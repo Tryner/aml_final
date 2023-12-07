@@ -10,3 +10,5 @@ class ActiveLearningConfig:
     sampling_strategy: Literal["random", "max_entropy"] = "max_entropy"
     seed = 42
     unlabeled_samples = 160
+
+    metric: str = "accuracy"

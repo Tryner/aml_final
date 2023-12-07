@@ -2,11 +2,10 @@ from typing import Callable
 from random import shuffle
 
 from datasets import Dataset, concatenate_datasets
-from setfit import SetFitModel, SetFitTrainer, sample_dataset
+from setfit import SetFitModel, Trainer, sample_dataset, TrainingArguments
 
 from torch.distributions import Categorical
 
-from train.train_config import TrainConfig
 from train.active_learning_config import ActiveLearningConfig
 from data.dataset_config import DatasetConfig
 
@@ -16,17 +15,17 @@ class ActiveTrainer:
             self,
             model_init: Callable[[], SetFitModel], 
             full_train_dataset: Dataset, 
-            train_config: TrainConfig, 
+            train_args: TrainingArguments,
             active_learning_config: ActiveLearningConfig,
             dataset_config: DatasetConfig,
             eval_dataset: Dataset = None,
             initial_train_subset: Dataset = None,
-            after_train_callback: Callable[[SetFitTrainer], None] = None,
+            after_train_callback: Callable[[Trainer], None] = None,
             dataset_callback: Callable[[Dataset], None] = None,
             ) -> None:
         self.model_init = model_init
         self.full_train_dataset = full_train_dataset
-        self.train_config = train_config
+        self.train_args = train_args
         self.active_learning_config = active_learning_config
         self.dataset_config = dataset_config
         self.eval_dataset = eval_dataset
@@ -52,7 +51,7 @@ class ActiveTrainer:
         train_subset = train_subset.cast_column(label_column, self.full_train_dataset.features[label_column])
         return train_subset
 
-    def train(self) -> SetFitTrainer: 
+    def train(self) -> Trainer: 
         trainer = self.run_training()
         for _ in range(self.active_learning_config.active_learning_cycles):
             sentences = self.select_sentences(trainer.model)
@@ -82,31 +81,16 @@ class ActiveTrainer:
             raise ValueError("Not a valid sampling_strategy: " + strategy)
 
 
-    def run_training(self) -> SetFitTrainer:
-        trainer = SetFitTrainer(
+    def run_training(self) -> Trainer:
+        trainer = Trainer(
             model_init=self.model_init,
             train_dataset=self.train_subset,
             eval_dataset=self.eval_dataset,
-            loss_class=self.train_config.loss_class,
-            metric=self.train_config.metric,
-            batch_size=self.train_config.contrastive_batch_size,
-            num_iterations=self.train_config.num_iterations,
-            num_epochs=1, # we control duration of training via num_iterations
+            args=self.train_args,
+            metric=self.active_learning_config.metric,
             column_mapping={self.dataset_config.text_column: "text", self.dataset_config.label_column: "label"},
         )
-        trainer.freeze() # Freeze the head
-        trainer.train() # Train only the body
-        # Unfreeze the head and freeze the body -> head-only training
-        #trainer.unfreeze(keep_body_frozen=True)
-        # OR: Unfreeze the head and unfreeze the body -> end-to-end training
-        trainer.unfreeze(keep_body_frozen=False)
-        trainer.train(
-            num_epochs=self.train_config.head_epochs, 
-            batch_size=self.train_config.head_batch_size,
-            body_learning_rate=self.train_config.body_learning_rate, 
-            learning_rate=self.train_config.head_learning_rate,
-            l2_weight=self.train_config.head_weight_decay,
-        )
+        trainer.train()
         if self.after_train_callback: self.after_train_callback(trainer)
         return trainer
 
