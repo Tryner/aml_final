@@ -37,32 +37,7 @@ class ActiveTrainer:
         if initial_train_subset is None:
             self.train_subset = self.create_initial_train_subset()
             
-    # def __init__(
-    #         self,
-    #         model_init: Callable[[], SetFitModel], 
-    #         full_train_dataset,
-    #         train_args: TrainingArguments,
-    #         active_learning_config: ActiveLearningConfig,
-    #         dataset_config: DatasetConfig,
-    #         eval_dataset,
-    #         initial_train_subset,
-    #         after_train_callback: Callable[[Trainer], None] = None,
-    #         dataset_callback: Callable[[Dataset], None] = None,
-    #         ) -> None:
-    #     self.model_init = model_init
-    #     self.full_train_dataset = full_train_dataset
-    #     self.train_args = train_args
-    #     self.active_learning_config = active_learning_config
-    #     self.dataset_config = dataset_config
-    #     self.eval_dataset = eval_dataset
-    #     self.after_train_callback = after_train_callback
-    #     self.dataset_callback = dataset_callback
-
-    #     self.train_subset = initial_train_subset
-    #     if initial_train_subset is None:
-    #         self.train_subset = self.create_initial_train_subset()        
-    
-    
+        
     def create_initial_train_subset(self) -> Dataset:
         samples_per_cycle = self.active_learning_config.samples_per_cycle
         seed = self.active_learning_config.seed
