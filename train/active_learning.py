@@ -8,6 +8,7 @@ from torch.distributions import Categorical
 
 from train.active_learning_config import ActiveLearningConfig
 from data.dataset_config import DatasetConfig
+import pandas as pd
 
 class ActiveTrainer:
 
@@ -35,6 +36,32 @@ class ActiveTrainer:
         self.train_subset = initial_train_subset
         if initial_train_subset is None:
             self.train_subset = self.create_initial_train_subset()
+            
+    # def __init__(
+    #         self,
+    #         model_init: Callable[[], SetFitModel], 
+    #         full_train_dataset,
+    #         train_args: TrainingArguments,
+    #         active_learning_config: ActiveLearningConfig,
+    #         dataset_config: DatasetConfig,
+    #         eval_dataset,
+    #         initial_train_subset,
+    #         after_train_callback: Callable[[Trainer], None] = None,
+    #         dataset_callback: Callable[[Dataset], None] = None,
+    #         ) -> None:
+    #     self.model_init = model_init
+    #     self.full_train_dataset = full_train_dataset
+    #     self.train_args = train_args
+    #     self.active_learning_config = active_learning_config
+    #     self.dataset_config = dataset_config
+    #     self.eval_dataset = eval_dataset
+    #     self.after_train_callback = after_train_callback
+    #     self.dataset_callback = dataset_callback
+
+    #     self.train_subset = initial_train_subset
+    #     if initial_train_subset is None:
+    #         self.train_subset = self.create_initial_train_subset()        
+    
     
     def create_initial_train_subset(self) -> Dataset:
         samples_per_cycle = self.active_learning_config.samples_per_cycle
@@ -50,6 +77,16 @@ class ActiveTrainer:
             raise ValueError("Not supported for initial sampling: " + self.active_learning_config.initial_sample)
         train_subset = train_subset.cast_column(label_column, self.full_train_dataset.features[label_column])
         return train_subset
+    
+
+    # def balanced_subsample(df, label_column, sample_size):
+    #     # Group by the label column
+    #     grouped = df.groupby(label_column, group_keys=False)
+        
+    #     # Sample a balanced number of rows from each group
+    #     balanced_sample = grouped.apply(lambda x: x.sample(min(len(x), sample_size)))
+        
+    #     return balanced_sample
 
     def train(self) -> Trainer: 
         trainer = self.run_training()
@@ -70,7 +107,7 @@ class ActiveTrainer:
         n_samples = self.active_learning_config.samples_per_cycle
         sentences = sentences[:self.active_learning_config.unlabeled_samples] #reduce computational cost
         if  strategy == "random":
-            shuffle(sentences)
+            # shuffle(sentences)
             return sentences[:n_samples]
         elif strategy == "max_entropy":
             probs = model.predict_proba(sentences)
