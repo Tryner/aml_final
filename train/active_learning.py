@@ -51,6 +51,7 @@ class ActiveTrainer:
         else:
             raise ValueError("Not supported for initial sampling: " + self.active_learning_config.initial_sample)
         train_subset = train_subset.cast_column(label_column, self.full_train_dataset.features[label_column])
+        print(train_subset)
         return train_subset
     
 
@@ -82,7 +83,7 @@ class ActiveTrainer:
         n_samples = self.active_learning_config.samples_per_cycle
         sentences = sentences[:self.active_learning_config.unlabeled_samples] #reduce computational cost
         if  strategy == "random":
-            # shuffle(sentences)
+            shuffle(sentences)
             return sentences[:n_samples]
         elif strategy == "max_entropy":
             probs = model.predict_proba(sentences)
