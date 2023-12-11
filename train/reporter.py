@@ -6,7 +6,7 @@ from setfit import Trainer
 
 from train.active_learning_config import ActiveLearningConfig
 
-def write_csv(file_name: str, data: list[str], delimmiter: str = ","):
+def write_csv(file_name: str, data: list[str], delimmiter: str = ";"):
     data = map(str, data) # ensure that we have strings
     line = delimmiter.join(data) + "\n"
     with open(file_name, mode="a") as f:
