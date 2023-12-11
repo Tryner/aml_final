@@ -2,7 +2,11 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from datasets import load_dataset, Dataset,DatasetDict
 
-
+class DatasetConfig:
+    text_column: str = "sentence"
+    label_column: str = "label"
+    num_classes: int = 2
+    
 def load_french_dataset(name):
 
     df=pd.read_csv(f'data/raw_datasets/{name}.csv')
