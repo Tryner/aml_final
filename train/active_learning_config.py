@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from datasets import Dataset
 
+@dataclass
 class ActiveLearningConfig:
     active_learning_cycles: int = 3
     samples_per_cycle: int = 8
