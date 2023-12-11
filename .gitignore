@@ -2,3 +2,4 @@
 requirement.txt
 ~$*
 *.pyc
+data/raw_datasets/french_tweets.csv
