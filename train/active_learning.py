@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Union
 from random import shuffle
 
 from datasets import Dataset, concatenate_datasets
@@ -20,8 +20,8 @@ class ActiveTrainer:
             dataset_config: DatasetConfig,
             eval_dataset: Dataset = None,
             initial_train_subset: Dataset = None,
-            after_train_callback: Callable[[Trainer], None] = None,
-            dataset_callback: Callable[[Dataset], None] = None,
+            metric = "accuracy",
+            after_train_callback: Callable[[Trainer, Dataset], None] = None,
             ) -> None:
         self.model_init = model_init
         self.full_train_dataset = full_train_dataset
@@ -29,8 +29,8 @@ class ActiveTrainer:
         self.active_learning_config = active_learning_config
         self.dataset_config = dataset_config
         self.eval_dataset = eval_dataset
+        self.metric = metric
         self.after_train_callback = after_train_callback
-        self.dataset_callback = dataset_callback
 
         self.train_subset = initial_train_subset
         if initial_train_subset is None:
@@ -57,7 +57,6 @@ class ActiveTrainer:
             sentences = self.select_sentences(trainer.model)
             labeled_sentences: Dataset = label_sentences(sentences, labeled_dataset=self.full_train_dataset, text_column=self.dataset_config.text_column)
             self.train_subset = concatenate_datasets([self.train_subset, labeled_sentences])
-            self.dataset_callback(self.train_subset)
             trainer = self.run_training()
 
         return trainer
@@ -87,11 +86,11 @@ class ActiveTrainer:
             train_dataset=self.train_subset,
             eval_dataset=self.eval_dataset,
             args=self.train_args,
-            metric=self.active_learning_config.metric,
+            metric=self.metric,
             column_mapping={self.dataset_config.text_column: "text", self.dataset_config.label_column: "label"},
         )
         trainer.train()
-        if self.after_train_callback: self.after_train_callback(trainer)
+        if self.after_train_callback: self.after_train_callback(trainer, self.train_subset)
         return trainer
 
 

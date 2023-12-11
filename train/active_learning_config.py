@@ -9,7 +9,7 @@ class ActiveLearningConfig:
     samples_per_cycle: int = 8
     initial_sample: Literal["balanced", "random"] = "balanced"
     sampling_strategy: Literal["random", "max_entropy"] = "max_entropy"
-    seed = 42
-    unlabeled_samples = 160
-
-    metric: str = "accuracy"
+    seed: int = 42
+    unlabeled_samples: int = 160
+    
+    model_name: str = "thenlper/gte-small"
