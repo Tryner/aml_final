@@ -66,6 +66,9 @@ class Reporter:
         
         if self.column_names is None:
             self.column_names = list(other_params.keys()) + list(metrics.keys()) + list(dataset_description.keys()) + list(active_learning_config.keys()) + list(train_args.keys())
+            duplicates = [column for column, amount in Counter(self.column_names).items() if amount>1]
+            if len(duplicates) > 0:
+                raise ValueError("Duplicated keys: " + str(duplicates))
             write_csv(self.file_name, self.column_names) #first call, so write column names
 
         data = other_params | metrics | dataset_description | active_learning_config | train_args # dict Union

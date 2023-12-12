@@ -1,9 +1,10 @@
-from typing import Callable, Union
+from typing import Callable
 from random import shuffle
+from collections import Counter
 
 from datasets import Dataset, concatenate_datasets
 from setfit import SetFitModel, Trainer, sample_dataset, TrainingArguments
-
+import torch
 from torch.distributions import Categorical
 
 from train.active_learning_config import ActiveLearningConfig
@@ -38,7 +39,7 @@ class ActiveTrainer:
     
     def create_initial_train_subset(self) -> Dataset:
         samples_per_cycle = self.active_learning_config.samples_per_cycle
-        seed = self.active_learning_config.seed
+        seed = self.active_learning_config.random_seed
         label_column = self.dataset_config.label_column
         if self.active_learning_config.initial_sample=="balanced":
             assert samples_per_cycle % self.dataset_config.num_classes == 0
@@ -52,32 +53,38 @@ class ActiveTrainer:
         return train_subset
 
     def train(self) -> Trainer: 
-        trainer = self.run_training()
         for _ in range(self.active_learning_config.active_learning_cycles):
+            trainer = self.run_training()
             sentences = self.select_sentences(trainer.model)
             labeled_sentences: Dataset = label_sentences(sentences, labeled_dataset=self.full_train_dataset, text_column=self.dataset_config.text_column)
             self.train_subset = concatenate_datasets([self.train_subset, labeled_sentences])
-            trainer = self.run_training()
-
+        trainer = self.run_training()
         return trainer
 
     def select_sentences(self, model: SetFitModel) -> list[str]:
         text_column = self.dataset_config.text_column
         sentences = set(self.full_train_dataset[text_column]) # remove duplicates
         sentences = list(sentences.difference(self.train_subset[text_column])) # remove already labeled sentences
-        strategy = self.active_learning_config.sampling_strategy
+        strategy = self.active_learning_config.active_sampling_strategy
         n_samples = self.active_learning_config.samples_per_cycle
         sentences = sentences[:self.active_learning_config.unlabeled_samples] #reduce computational cost
         if  strategy == "random":
             shuffle(sentences)
             return sentences[:n_samples]
-        elif strategy == "max_entropy":
-            probs = model.predict_proba(sentences)
+        
+        probs = model.predict_proba(sentences)
+        if ActiveLearningConfig.balancing_factor is not None:
+            size = len(self.train_subset)
+            counter = Counter(self.train_subset)
+            dist = torch.tensor([counter[label] for label in range(self.dataset_config.num_classes)]) / size
+            dist_weight = self.active_learning_config.balancing_factor
+            probs = ((1- dist_weight) * probs) + (dist_weight * dist)
+        if strategy == "max_entropy":
             entropy = Categorical(probs=probs).entropy()
             sorted_sentences = sorted(zip(entropy, sentences), reverse=True)
             return [s for e, s in sorted_sentences][:n_samples]
-        else:
-            raise ValueError("Not a valid sampling_strategy: " + strategy)
+        
+        raise ValueError("Not a valid sampling_strategy: " + strategy)
 
 
     def run_training(self) -> Trainer:
