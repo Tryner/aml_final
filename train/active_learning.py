@@ -33,7 +33,8 @@ class ActiveTrainer:
             initial_train_subset: Dataset = None,
             metric = "accuracy",
             after_train_callback: Callable[[Trainer, Dataset, int], None] = None,
-            run_id: int = -1
+            run_id: int = -1,
+            final_model_train_args: TrainingArguments = None,
             ) -> None:
         self.model_init = model_init
         self.full_train_dataset = full_train_dataset
@@ -44,6 +45,10 @@ class ActiveTrainer:
         self.metric = metric
         self.after_train_callback = after_train_callback
         self.run_id = run_id
+        self.final_model_train_args = final_model_train_args
+        if final_model_train_args is None:
+            self.final_model_train_args = train_args
+
 
         self.train_subset = initial_train_subset
         if initial_train_subset is None:
@@ -70,7 +75,7 @@ class ActiveTrainer:
             sentences = self.select_sentences(trainer.model)
             labeled_sentences: Dataset = label_sentences(sentences, labeled_dataset=self.full_train_dataset, text_column=self.dataset_config.text_column)
             self.train_subset = concatenate_datasets([self.train_subset, labeled_sentences])
-        trainer = self.run_training()
+        trainer = self.run_training(final_model=True)
         return trainer
 
     def select_sentences(self, model: SetFitModel) -> list[str]:
@@ -99,13 +104,15 @@ class ActiveTrainer:
         raise ValueError("Not a valid sampling_strategy: " + strategy)
 
 
-    def run_training(self) -> Trainer:
+    def run_training(self, final_model: bool = False) -> Trainer:
         gc.collect() #free up vram
+        args = self.train_args
+        if final_model: args = self.final_model_train_args
         trainer = Trainer(
             model_init=self.model_init,
             train_dataset=self.train_subset,
             eval_dataset=self.eval_dataset,
-            args=self.train_args,
+            args=args,
             metric=self.metric,
             column_mapping={self.dataset_config.text_column: "text", self.dataset_config.label_column: "label"},
         )
