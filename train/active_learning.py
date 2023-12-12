@@ -84,7 +84,7 @@ class ActiveTrainer:
             shuffle(sentences)
             return sentences[:n_samples]
         
-        probs = model.predict_proba(sentences)
+        probs = model.predict_proba(sentences).cpu()
         if self.active_learning_config.balancing_factor is not None:
             size = len(self.train_subset)
             counter = Counter(self.train_subset[self.dataset_config.label_column])
