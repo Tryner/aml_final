@@ -87,7 +87,7 @@ class ActiveTrainer:
         probs = model.predict_proba(sentences)
         if self.active_learning_config.balancing_factor is not None:
             size = len(self.train_subset)
-            counter = Counter(self.train_subset)
+            counter = Counter(self.train_subset[self.dataset_config.label_column])
             dist = torch.tensor([counter[label] for label in range(self.dataset_config.num_classes)]) / size
             dist_weight = self.active_learning_config.balancing_factor
             probs = ((1- dist_weight) * probs) + (dist_weight * dist)
