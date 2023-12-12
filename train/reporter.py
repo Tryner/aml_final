@@ -41,8 +41,8 @@ class Reporter:
         self.report_train_args = report_train_args
         self.label_column = label_column
         
-        
-    def report(self, trainer: Trainer = None, dataset: Dataset = None, active_learning_config: ActiveLearningConfig = None, **other_params):
+    # def report(self, trainer: Trainer = None, dataset: Dataset = None, active_learning_config: ActiveLearningConfig = None, **other_params):    
+    def report(self, elapsed_time, trainer: Trainer = None, dataset: Dataset = None, active_learning_config: ActiveLearningConfig = None, **other_params):
         if trainer:
             metrics = trainer.evaluate()
             metrics = {k: f"{v:.3f}" for k, v in metrics.items()}
@@ -70,6 +70,12 @@ class Reporter:
             if len(duplicates) > 0:
                 raise ValueError("Duplicated keys: " + str(duplicates))
             write_csv(self.file_name, self.column_names) #first call, so write column names
+            
+        # if elapsed_time['time']:
+        #     elapsed_time=asdict{elapsed_time}
+        # else:
+        #     elapsed_time = {}
 
-        data = other_params | metrics | dataset_description | active_learning_config | train_args # dict Union
+        data = other_params | metrics | dataset_description | active_learning_config | train_args | elapsed_time # dict Union
+        # data = other_params | metrics | dataset_description | active_learning_config | train_args # dict Union
         write_dict(self.file_name, column_names=self.column_names, values=data)
