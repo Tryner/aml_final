@@ -7,6 +7,30 @@ class DatasetConfig:
     label_column: str = "label"
     num_classes: int = 2
     
+def load(choice):
+    match choice:
+        case 1:
+            d = load_dataset("sst2")
+        case 2:
+            d = load_french_dataset('french_twitter_reduced')
+        case 3:
+            d =load_spanish_dataset('twitter_humor')
+        case 4:
+            d = load_indonesian_dataset('datd_train')
+        case _:
+            print('wrong selection') 
+    return d
+    
+def select_dataset():
+    print("Select dataset:")
+    print("1. sst2")
+    print("2. french")
+    print("3. spanish")
+    print("4. indonesian")
+    choice = input("Enter choice (1, 2, 3, or 4): ")
+    return int(choice)
+
+    
 def load_french_dataset(name):
 
     df=pd.read_csv(f'data/raw_datasets/{name}.csv')
@@ -45,26 +69,19 @@ def load_spanish_dataset(name):
 
 
 
-def load_indonesian_dataset():
+def load_indonesian_dataset(name):
+    df=pd.read_csv(f'data/raw_datasets/{name}.csv')
 
-    dataset_path = "/content/drive/MyDrive/aml_final-main/aml_final-main/data/raw_datasets/datd_train.csv"
-    #dataset = load_dataset("csv", data_files=dataset_path)
-    from sklearn.model_selection import train_test_split
-    from datasets import load_dataset
+    df=df.loc[:,['text','label']]
+    df=df.rename(columns={'text': DatasetConfig.text_column, 'label': DatasetConfig.label_column})
+    X = df.drop('label', axis=1)  # Assuming 'label' is the name of your label column
+    y = df['label']
 
-    # Carica il tuo dataset CSV
-    dataset = load_dataset("csv", data_files=dataset_path )["train"]
+    # Split the data into training and validation sets
+    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Specifica la proporzione di addestramento e di validazione
-    train_ratio = 0.75
-    validation_ratio = 0.25
-
-    # Calcola le dimensioni dei set di addestramento e validazione
-    train_size = int(len(dataset) * train_ratio)
-    validation_size = len(dataset) - train_size
-
-    # Fai lo split del dataset
-    train_dataset, validation_dataset = train_test_split(dataset, test_size=validation_ratio, random_state=42)
-
-    # Ora puoi utilizzare train_dataset e validation_dataset per l'addestramento e la validazione
-    return {"train":Dataset.from_dict(train_dataset),"validation": Dataset.from_dict(validation_dataset)}
+    # Create DataFrames for training and validation
+    tset = Dataset.from_pandas(pd.concat([X_train, y_train], axis=1))
+    vset = Dataset.from_pandas(pd.concat([X_valid, y_valid], axis=1))
+    dataset_dict = DatasetDict({'train': tset, 'validation': vset})
+    return dataset_dict
