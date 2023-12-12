@@ -100,6 +100,7 @@ class ActiveTrainer:
 
 
     def run_training(self) -> Trainer:
+        gc.collect() #free up vram
         trainer = Trainer(
             model_init=self.model_init,
             train_dataset=self.train_subset,
