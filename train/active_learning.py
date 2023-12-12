@@ -1,6 +1,7 @@
 from typing import Callable
 from random import shuffle
 from collections import Counter
+import gc
 
 from datasets import Dataset, concatenate_datasets
 from setfit import SetFitModel, Trainer, sample_dataset, TrainingArguments
@@ -9,6 +10,15 @@ from torch.distributions import Categorical
 
 from train.active_learning_config import ActiveLearningConfig
 from data.dataset_config import DatasetConfig
+
+def create_random_subset(dataset: Dataset, num_samples: int, label_column: str = "label", text_column: str = "text", seed: int = 42):
+    one = sample_dataset(dataset, label_column, num_samples=1, seed=seed) # ensure that we have at least one example per class
+    random = dataset.shuffle(seed=seed).select(range(num_samples))
+    random = random.filter(lambda e: e[text_column] not in one[text_column]) # remove duplicates
+    random = random.select(range(num_samples-len(one))) # len(random) + len(one) = num_samples
+    #one = one.cast_column(label_column, random.features[label_column]) # sample_dataset looses some information
+    return concatenate_datasets([one, random])
+
 
 class ActiveTrainer:
 
@@ -22,7 +32,8 @@ class ActiveTrainer:
             eval_dataset: Dataset = None,
             initial_train_subset: Dataset = None,
             metric = "accuracy",
-            after_train_callback: Callable[[Trainer, Dataset], None] = None,
+            after_train_callback: Callable[[Trainer, Dataset, int], None] = None,
+            run_id: int = -1
             ) -> None:
         self.model_init = model_init
         self.full_train_dataset = full_train_dataset
@@ -32,6 +43,7 @@ class ActiveTrainer:
         self.eval_dataset = eval_dataset
         self.metric = metric
         self.after_train_callback = after_train_callback
+        self.run_id = run_id
 
         self.train_subset = initial_train_subset
         if initial_train_subset is None:
@@ -97,7 +109,7 @@ class ActiveTrainer:
             column_mapping={self.dataset_config.text_column: "text", self.dataset_config.label_column: "label"},
         )
         trainer.train()
-        if self.after_train_callback: self.after_train_callback(trainer, self.train_subset)
+        if self.after_train_callback: self.after_train_callback(trainer, self.train_subset, self.run_id)
         return trainer
 
 
