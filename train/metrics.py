@@ -9,8 +9,8 @@ def camprehesive_metrics(y_pred: Dataset, y_true: Dataset, **metric_kwargs) -> d
         "balanced_accuracy": balanced_accuracy
     }
     for label in set(y_true):
-        recall = metrics.recall_score(y_true=y_true, y_pred=y_pred, pos_label=label)
-        precision = metrics.precision_score(y_true=y_true, y_pred=y_pred, pos_label=label)
+        recall = float(metrics.recall_score(y_true=y_true, y_pred=y_pred, labels=[label], average=None)[0])
+        precision = float(metrics.precision_score(y_true=y_true, y_pred=y_pred, labels=[label], average=None)[0])
         results.update({
             "recall_" + str(label): recall,
             "precision_" + str(label): precision
