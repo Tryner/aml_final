@@ -11,11 +11,11 @@ from torch.distributions import Categorical
 from train.active_learning_config import ActiveLearningConfig
 from data.dataset_config import DatasetConfig
 
-def create_random_subset(dataset: Dataset, num_samples: int, num_balanced_samples: int = 1, label_column: str = "label", text_column: str = "text", seed: int = 42):
-    balanced_subset = sample_dataset(dataset, label_column, num_samples=num_balanced_samples, seed=seed) # ensure that we have at least one example per class
+def create_random_subset(dataset: Dataset, dataset_config: DatasetConfig, num_samples: int, num_balanced_samples: int = 1, seed: int = 42):
+    balanced_subset = sample_dataset(dataset, dataset_config.label_column, num_balanced_samples, seed=seed) # ensure that we have at least one example per class
     return add_random_samples(
         dataset=dataset, subset=balanced_subset, num_samples=num_samples, 
-        label_column=label_column, text_column=text_column, seed=seed
+        label_column=dataset_config.label_column, text_column=dataset_config.text_column, seed=seed
         )
 
 def add_random_samples(dataset: Dataset, subset: Dataset, num_samples: int, label_column: str, text_column: str, seed: int):
