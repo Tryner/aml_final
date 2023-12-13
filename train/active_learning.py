@@ -98,6 +98,7 @@ class ActiveTrainer:
         sentences = list(sentences.difference(self.train_subset[text_column])) # remove already labeled sentences
         strategy = self.active_learning_config.active_sampling_strategy
         n_samples = self.active_learning_config.samples_per_cycle
+        shuffle(sentences)
         sentences = sentences[:self.active_learning_config.unlabeled_samples] #reduce computational cost
         if  strategy == "random":
             shuffle(sentences)
