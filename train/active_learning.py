@@ -30,11 +30,11 @@ class ActiveTrainer:
 
     def __init__(
             self,
-            model_init: Callable[[], SetFitModel] | None, 
             full_train_dataset: Dataset, 
             train_args: TrainingArguments,
             active_learning_config: ActiveLearningConfig,
             dataset_config: DatasetConfig,
+            model_init: Callable[[], SetFitModel] | None = None, 
             eval_dataset: Dataset = None,
             initial_train_subset: Dataset = None,
             metric = "accuracy",
