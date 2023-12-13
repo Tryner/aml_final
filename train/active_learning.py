@@ -30,7 +30,7 @@ class ActiveTrainer:
 
     def __init__(
             self,
-            model_init: Callable[[], SetFitModel], 
+            model_init: Callable[[], SetFitModel] | None, 
             full_train_dataset: Dataset, 
             train_args: TrainingArguments,
             active_learning_config: ActiveLearningConfig,
@@ -42,7 +42,6 @@ class ActiveTrainer:
             run_id: int = -1,
             final_model_train_args: TrainingArguments = None,
             ) -> None:
-        self.model_init = model_init
         self.full_train_dataset = full_train_dataset
         self.train_args = train_args
         self.active_learning_config = active_learning_config
@@ -51,6 +50,13 @@ class ActiveTrainer:
         self.metric = metric
         self.after_train_callback = after_train_callback
         self.run_id = run_id
+
+        self.model_init = model_init
+        if model_init is None:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            self.model_init = lambda: SetFitModel.from_pretrained(
+                active_learning_config.model_name, use_differentiable_head=True, head_params={"out_features": dataset_config.num_classes}
+                ).to(device)
 
         self.final_model_train_args = final_model_train_args
         if final_model_train_args is None:
