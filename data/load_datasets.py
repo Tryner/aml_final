@@ -10,16 +10,20 @@ class DatasetConfig:
 def load(choice):
     match choice:
         case 1:
-            d = load_dataset("sst2")
+            name="sst2"
+            d = load_dataset(name)
         case 2:
-            d = load_french_dataset('french_twitter_reduced')
+            name="french_twitter_reduced"
+            d = load_french_dataset(name)
         case 3:
-            d =load_spanish_dataset('twitter_humor')
+            name="twitter_humor"
+            d =load_spanish_dataset(name)
         case 4:
-            d = load_indonesian_dataset('datd_train')
+            name="datd_train"
+            d = load_indonesian_dataset(name)
         case _:
             print('wrong selection') 
-    return d
+    return name, d
     
 def select_dataset():
     print("Select dataset:")

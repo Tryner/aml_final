@@ -3,3 +3,5 @@ requirement.txt
 ~$*
 *.pyc
 data/raw_datasets/french_tweets.csv
+example_cycle_report.csv
+example_final_report.csv
