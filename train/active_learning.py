@@ -11,13 +11,19 @@ from torch.distributions import Categorical
 from train.active_learning_config import ActiveLearningConfig
 from data.dataset_config import DatasetConfig
 
-def create_random_subset(dataset: Dataset, num_samples: int, label_column: str = "label", text_column: str = "text", seed: int = 42):
-    one = sample_dataset(dataset, label_column, num_samples=1, seed=seed) # ensure that we have at least one example per class
-    random = dataset.shuffle(seed=seed).select(range(num_samples))
-    random = random.filter(lambda e: e[text_column] not in one[text_column]) # remove duplicates
-    random = random.select(range(num_samples-len(one))) # len(random) + len(one) = num_samples
-    #one = one.cast_column(label_column, random.features[label_column]) # sample_dataset looses some information
-    return concatenate_datasets([one, random])
+def create_random_subset(dataset: Dataset, num_samples: int, num_balanced_samples: int = 1, label_column: str = "label", text_column: str = "text", seed: int = 42):
+    balanced_subset = sample_dataset(dataset, label_column, num_samples=num_balanced_samples, seed=seed) # ensure that we have at least one example per class
+    return add_random_samples(
+        dataset=dataset, subset=balanced_subset, num_samples=num_samples, 
+        label_column=label_column, text_column=text_column, seed=seed
+        )
+
+def add_random_samples(dataset: Dataset, subset: Dataset, num_samples: int, label_column: str, text_column: str, seed: int):
+    random_samples = dataset.shuffle(seed=seed).select(range(num_samples))
+    random_samples = random_samples.filter(lambda e: e[text_column] not in subset[text_column]) # remove duplicates
+    random_samples = random_samples.select(range(num_samples-len(subset))) # len(random) + len(one) = num_samples
+    subset = subset.cast_column(label_column, random_samples.features[label_column]) # sample_dataset sometimes looses some information, preventing concat
+    return concatenate_datasets([random_samples, subset])
 
 
 class ActiveTrainer:
@@ -45,10 +51,10 @@ class ActiveTrainer:
         self.metric = metric
         self.after_train_callback = after_train_callback
         self.run_id = run_id
+
         self.final_model_train_args = final_model_train_args
         if final_model_train_args is None:
             self.final_model_train_args = train_args
-
 
         self.train_subset = initial_train_subset
         if initial_train_subset is None:
