@@ -15,10 +15,12 @@ def create_random_subset(dataset: Dataset, dataset_config: DatasetConfig, num_sa
     balanced_subset = sample_dataset(dataset, dataset_config.label_column, num_balanced_samples, seed=seed) # ensure that we have at least one example per class
     return add_random_samples(
         dataset=dataset, subset=balanced_subset, num_samples=num_samples, 
-        label_column=dataset_config.label_column, text_column=dataset_config.text_column, seed=seed
+        dataset_config=dataset_config, seed=seed
         )
 
-def add_random_samples(dataset: Dataset, subset: Dataset, num_samples: int, label_column: str, text_column: str, seed: int):
+def add_random_samples(dataset: Dataset, subset: Dataset, num_samples: int, dataset_config: DatasetConfig, seed: int):
+    text_column = dataset_config.text_column
+    label_column = dataset_config.label_column
     random_samples = dataset.shuffle(seed=seed).select(range(num_samples))
     random_samples = random_samples.filter(lambda e: e[text_column] not in subset[text_column]) # remove duplicates
     random_samples = random_samples.select(range(num_samples-len(subset))) # len(random) + len(one) = num_samples
