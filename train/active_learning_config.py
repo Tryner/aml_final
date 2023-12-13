@@ -14,4 +14,4 @@ class ActiveLearningConfig:
     unlabeled_samples: int = 160
     
     # model_name: str = "thenlper/gte-small"
-    model_name: Literal["thenlper/gte-small", "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"] ="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
+    model_name: Literal["thenlper/gte-small", "sentence-transformers/paraphrase-multilingual-mpnet-base-v2", "sentence-transformers/all-mpnet-base-v2"] ="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
